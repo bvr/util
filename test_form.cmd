@@ -1,0 +1,1 @@
+@perl -MPath::Class -E "$patt=join'|',map{s/\./\\./g;s/\*/.*/g;qq{^$_\$}}@ARGV; dir('.')->recurse(callback=>sub{$_=$_[0]; out($_) if/$patt/i && !/\.svn/ }); sub out{$file=shift; local $_=file($file)->slurp; warn sprintf qq{%%-50s %%4d %%-10s%%-10s\n}, $file, tr/\n/\n/, / +\n/m?'end-space':'', /\t/?'tabs':'';}" %1 %2 %3 %4 %5 %6 %7 %8 %9
