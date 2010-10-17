@@ -1,16 +1,3 @@
-<<<<<<< HEAD
-IfWinExist ahk_class Console_2_Main
-{
-    SplitPath,A_WorkingDir,OutFileName,OutDir,OutExtension,OutNameNoExt,OutDrive
-    CurDirectory = %A_WorkingDir%
-    ControlSend,,^{F1},ahk_class Console_2_Main
-    WinActivate
-    SendPlay, %OutDrive% {Enter}cd "%CurDirectory%"{Enter}cls{Enter}^r%OutFileName%{Enter}
-}
-Else
-    Run,console.exe -d .
-=======
-
 ; console launcher                        (c) 2009-2010 Roman Hubacek
 
 ; read commandline options
@@ -51,4 +38,3 @@ If %Command%
 {
     SendPlay, %Command%{Enter}
 }
->>>>>>> ff70cc58cf51f08c8db60e36a1c7aefa530dbe25
