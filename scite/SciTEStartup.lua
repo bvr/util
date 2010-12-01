@@ -43,16 +43,6 @@ function next_param()
   end
 end
 
--- shortcut Ctrl+Shift+E Expand current line [*.stat]
-function expand_stat()
-  items = split(get_line(),"\t")
-  print(">Expanding results for \"" .. items[1] .. "\", " .. items[2] .. " occurences")
-  for it = 3,table.getn(items) do
-    print(items[it] .. ":")
-  end
-  print(">End")
-end
-
 -- open or activate file favorite.properties and mark all groups - [item]
 function open_favorites()
   scite.Open(props.SciteDefaultHome .. "\\favorite.properties")
@@ -68,10 +58,6 @@ function open_project()
   for m in editor:match("\[[^\[]*\]",SCFIND_REGEXP) do
     editor:MarkerAdd(editor:LineFromPosition(m.pos),1)
   end
-end
-
-function open_proc()
-  scite.Open(props.SciteDefaultHome .. "\\proc.pl")
 end
 
 -- shortcut Ctrl+Shift+C Open C/H [$(file.patterns.cpp)]
@@ -302,6 +288,3 @@ function useful()
   editor:EndUndoAction()
 end
 
-function CopyPath()
-  editor:CopyText(props.FilePath.."\n")
-end

@@ -42,6 +42,7 @@ end
 
 local function IdenticalTextFinder()
   local current_pos = editor.CurrentPos
+
   if current_pos == store_pos then return end
   store_pos = current_pos
 
@@ -59,6 +60,7 @@ local function IdenticalTextFinder()
   EditorClearMarks(mark_ident)
   EditorClearMarks(mark_max)
   if wholeword then word_pattern = '[^' .. props['chars.alpha'] .. '_' .. ']' end
+
   ----------------------------------------------------------
   local match_table = {}
   local find_start = 1

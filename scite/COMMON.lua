@@ -1,14 +1,10 @@
 -- COMMON.lua
 -- Version: 1.4.6
 ---------------------------------------------------
--- Общие функции, использующиеся во многих скриптах
----------------------------------------------------
 
--- Пути поиска подключаемых lua-библиотек
 package.cpath = props["SciteDefaultHome"].."\\tools\\LuaLib\\?.dll;"..package.cpath
 
 --------------------------------------------------------
--- Замена порой неработающего props['CurrentWord']
 function GetCurrentWord()
 	local current_pos = editor.CurrentPos
 	return editor:textrange(editor:WordStartPosition(current_pos, true),
@@ -16,17 +12,14 @@ function GetCurrentWord()
 end
 
 --------------------------------------------------------
--- Замена ф-ций string.lower() и string.upper()
--- Работает с любыми национальными кодировками
--- Требует наличие корректно заданного параметра chars.accented = АаБб...
 if props["chars.accented"] ~= "" then
 	local old_lower = string.lower
 	function string.lower(s)
 		local locale = props["chars.accented"]
-		if not s:find('['..locale..']') then return old_lower(s) end -- нет нац. символов => пользуемся старой функцией
-		local res = "" -- здесь будем собирать результат
-		local ch -- символ
-		local pos -- позиция в локали
+		if not s:find('['..locale..']') then return old_lower(s) end
+		local res = ""
+		local ch
+		local pos
 		for i = 1, #s do
 			ch = s:sub(i,i)
 			pos = locale:find(ch,1,true)
@@ -44,10 +37,10 @@ if props["chars.accented"] ~= "" then
 	local old_upper = string.upper
 	function string.upper(s)
 		local locale = props["chars.accented"]
-		if not s:find('['..locale..']') then return old_upper(s) end -- нет нац. символов => пользуемся старой функцией
-		local res = "" -- здесь будем собирать результат
-		local ch -- символ
-		local pos -- позиция в локали
+		if not s:find('['..locale..']') then return old_upper(s) end
+		local res = ""
+		local ch
+		local pos
 		for i = 1, #s do
 			ch = s:sub(i,i)
 			pos = locale:find(ch,1,true)
@@ -61,20 +54,16 @@ if props["chars.accented"] ~= "" then
 		end
 		return res
 	end
-	
+
 end -- IFDEF chars.accented
 
 --------------------------------------------------------
--- string.to_pattern возращает строку, пригодную для использования
--- в виде паттерна в string.find и т.п.
--- Например: "xx-yy" -> "xx%-yy"
-local lua_patt_chars = "[%(%)%.%+%-%*%?%[%]%^%$%%]" -- управляющие паттернами символов Луа:
+local lua_patt_chars = "[%(%)%.%+%-%*%?%[%]%^%$%%]"
 function string.pattern( s )
-	return (s:gsub(lua_patt_chars,'%%%0'))-- фактически экранирование служебных символов символом %
+	return (s:gsub(lua_patt_chars,'%%%0'))
 end
 
 --------------------------------------------------------
--- Проверяет параметр на nil и если это так то возвращает default иначе возвращает сам параметр
 function ifnil(val, default)
   if val == nil then
     return default
@@ -84,7 +73,6 @@ function ifnil(val, default)
 end
 
 --------------------------------------------------------
--- Определение соответствует ли стиль символа стилю комментария
 function IsComment(pos)
 	local style = editor.StyleAt[pos]
 	local lexer = editor.LexerLanguage
@@ -130,7 +118,6 @@ function IsComment(pos)
 		vhdl = {1, 2}
 	}
 
-	-- Для лексеров, перечисленных в массиве:
 	for l,ts in pairs(comment) do
 		if l == lexer then
 			for _,s in pairs(ts) do
@@ -141,7 +128,6 @@ function IsComment(pos)
 			return false
 		end
 	end
-	-- Для остальных лексеров:
 	-- asn1, ave, blitzbasic, cmake, conf, eiffel, eiffelkw, erlang, euphoria, fortran, f77, freebasic, kix, lisp, lout, octave, matlab, metapost, nncrontab, props, batch, makefile, diff, purebasic, vb, yaml
 	if style == 1 then return true end
 	return false
@@ -150,7 +136,6 @@ end
 
 ------[[ T E X T   M A R K S ]]-------------------------
 
--- Выделение текста маркером определенного стиля
 function EditorMarkText(start, length, style_number)
 	local current_mark_number = scite.SendEditor(SCI_GETINDICATORCURRENT)
 	scite.SendEditor(SCI_SETINDICATORCURRENT, style_number)
@@ -158,9 +143,6 @@ function EditorMarkText(start, length, style_number)
 	scite.SendEditor(SCI_SETINDICATORCURRENT, current_mark_number)
 end
 
--- Очистка текста от маркерного выделения заданного стиля
---   если параметры отсутсвуют - очищаются все стили во всем тексте
---   если не указана позиция и длина - очищается весь текст
 function EditorClearMarks(style_number, start, length)
 	local _first_style, _end_style, style
 	local current_mark_number = scite.SendEditor(SCI_GETINDICATORCURRENT)
@@ -180,7 +162,6 @@ function EditorClearMarks(style_number, start, length)
 end
 
 ----------------------------------------------------------------------------
--- Задание стиля для маркеров (затем эти маркеры можно будет использовать в скриптах, вызывая их по номеру)
 
 -- Translate color from RGB to win
 local function encodeRGB2WIN(color)
@@ -237,23 +218,18 @@ function OnOpen(file)
 end
 
 ----------------------------------------------------------------------------
--- Инвертирование состояния заданного параметра (используется для снятия/установки "галок" в меню)
 function CheckChange(prop_name)
 	local cur_prop = ifnil(tonumber(props[prop_name]), 0)
 	props[prop_name] = 1 - cur_prop
 end
 
 -- ==============================================================
--- Функция копирования os_copy(source_path,dest_path)
--- Автор z00n <http://www.lua.ru/forum/posts/list/15/89.page>
---// "библиотечная" функция
 local function unwind_protect(thunk,cleanup)
 	local ok,res = pcall(thunk)
 	if cleanup then cleanup() end
 	if not ok then error(res,0) else return res end
 end
 
---// общая функция для работы с открытыми файлами
 local function with_open_file(name,mode)
 	return function(body)
 	local f = assert(io.open(name,mode))
@@ -262,7 +238,6 @@ local function with_open_file(name,mode)
 	end
 end
 
---// собственно os-copy --
 function os_copy(source_path,dest_path)
 	return with_open_file(source_path,"rb") (function(source)
 		return with_open_file(dest_path,"wb") (function(dest)
