@@ -1,7 +1,7 @@
 use Term::ReadLine;
 use HTML::TreeBuilder;
 use LWP::Simple;
-use Encode; 
+use Encode;
 use List::Util qw(max);
 
 # direction of translate
@@ -20,7 +20,7 @@ if(@ARGV) {
 }
 
 # otherwise bring user interface
-my $term   = new Term::ReadLine 'Seznam Dictionary';
+my $term   = Term::ReadLine->new('Seznam Dictionary');
 my $prompt = ">";
 my $OUT    = $term->OUT || \*STDOUT;
 while (defined($word = $term->readline($prompt))) {
@@ -35,7 +35,7 @@ sub print_translation {
 
     # underline the entry
     print "-"x (length($word)+2),"\n";
-    
+
     # get the data from slovnik.seznam.cz
     Encode::from_to($word,"cp852","utf-8");
     my $tree = HTML::TreeBuilder->new_from_content(
@@ -47,11 +47,11 @@ sub print_translation {
         print "Not found\n\n";
         next;
     }
-    
+
     # translations
     my $res_text = '';
     for $row ($res->find('tr')) {
-        my ($from,$to) = map { 
+        my ($from,$to) = map {
             my $text = $_->as_text;
             Encode::from_to($text,"utf-8","cp852");
             trim($text);
@@ -62,7 +62,7 @@ sub print_translation {
         $res_text .=  $from . ' ' . $to . "\n";
     }
     print $res_text,"\n";
-    
+
     # collocations
     my @colloc = ();
     for $row ($res->look_down(_tag => qr/^(dt|dd)$/i)) {
@@ -70,7 +70,7 @@ sub print_translation {
         Encode::from_to($text,"utf-8","cp852");
         push @colloc, $text;
     }
-    
+
     my $longest = max map { length } @colloc[ map { $_*2 } (0..$#colloc/2) ];
     for my $i (0..$#colloc/2) {
         my $line = sprintf "%-${longest}s%s\n",$colloc[2*$i],$colloc[2*$i+1];

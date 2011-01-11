@@ -25,8 +25,16 @@ function highlighting_identical_text_switch()
 end
 
 local function isWord(all_text, text_start, text_end)
-  if  ( (text_start==1)     or (all_text:sub(text_start-1, text_start-1):match(word_pattern)) ) and
-    ( (text_end==#all_text) or (all_text:sub(text_end+1, text_end+1):match(word_pattern)) )    then
+  local char_before = all_text:sub(text_start-1, text_start-1)
+  local char_after  = all_text:sub(text_end+1, text_end+1)
+  local char_start  = all_text:sub(text_start, text_start)
+
+  -- _ALERT('char_before = ' .. char_before .. '  char_after  = ' .. char_after .. '  char_start  = ' .. char_start .. ' pattern = ' .. word_pattern)
+
+  if    char_start:match(word_pattern)
+    and text_start==1       or char_before:match(word_pattern)
+    and text_end==#all_text or char_after:match(word_pattern)
+  then
       return true
   end
   return false
@@ -68,9 +76,8 @@ local function IdenticalTextFinder()
     local ident_text_start, ident_text_end = all_text:find(cur_text, find_start, true)
     if ident_text_start == nil then break end
     if ident_text_end == 0 then break end
-    if ( not wholeword ) or
-      ( isWord(all_text, ident_text_start, ident_text_end) ) then
-        match_table[#match_table+1] = {ident_text_start-1, ident_text_end}
+    if not wholeword or isWord(all_text, ident_text_start, ident_text_end) then
+      match_table[#match_table+1] = {ident_text_start-1, ident_text_end}
     end
     if count_max ~= 0 then
       if #match_table > count_max then
