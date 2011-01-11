@@ -1,0 +1,1 @@
+@perl -MPerl::Tidy -E "Perl::Tidy::perltidy(argv => [@ARGV],prefilter=>sub{ $_=$_[0];s/^method (.*)/sub $1 \#__METHOD/gm;$_}, postfilter=>sub{ $_=$_[0];s/^sub (.*?)\s* \#__METHOD/method $1/gm;$_})" -- %*

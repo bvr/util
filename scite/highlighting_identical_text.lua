@@ -60,13 +60,13 @@ local function IdenticalTextFinder()
   if cur_text == '' then
     cur_text = GetCurrentWord()
     wholeword = true
+    if isReservedWord(cur_text) then return end
   end
   if cur_text == store_text then return end
   store_text = cur_text
 
   EditorClearMarks(mark_ident)
   EditorClearMarks(mark_max)
-  if isReservedWord(cur_text) then return end
   if wholeword then word_pattern = '[^' .. props['chars.alpha'] .. '_' .. ']' end
 
   ----------------------------------------------------------
@@ -117,7 +117,6 @@ function OnUpdateUI ()
       if editor.Length ~= chars_count then
         all_text = editor:GetText()
         chars_count = editor.Length
-        reserved_words = props['highlighting.identical.text.reserved.words.*']
       end
       IdenticalTextFinder()
     end
