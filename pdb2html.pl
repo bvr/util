@@ -27,13 +27,15 @@ my %ent = (
 for my $file (@ARGV) {
 
     # process file
+    my $basename = fileparse($file, qr/\.[^.]+/);
     my @lines = map { s/^\s+//; s/\s+$//; s/([&"<>])/$ent{$1}/g; $_ } `makedoc -d "$file"`;
     my ($fh,$filename) = tempfile(SUFFIX => '.html');
     binmode($fh => ':crlf');
 
-    print {$fh} header($title || $file);
+    print {$fh} header($title || $basename);
     for my $line (@lines) {
         Encode::from_to($line,"cp1250","utf-8");
+        $line = '&nbsp;' unless $line;
         print {$fh} "<p>$line</p>\n";
     }
     print {$fh} footer();
@@ -41,7 +43,7 @@ for my $file (@ARGV) {
 
     # actions
     if($auto_output) {
-        $output = fileparse($file, qr/\.[^.]+/) . ".html";
+        $output = $basename . ".html";
     }
     if($output) {
         warn "Creating file \"$output\"\n";
@@ -62,6 +64,10 @@ sub help {
 
 sub header {
     my ($title) = @_;
+
+    $title =~ tr/_/ /;
+    $title =~ s/([&"<>])/$ent{$1}/g;
+
     return <<HEADER;
 <html>
 <head>
@@ -103,7 +109,7 @@ generated in temp directory and default browser runned to display it.
 
 =item B<-title> or B<-t>
 
-Specify title of the document. Default is input filename.
+Specify title of the document. Default is cleaned input filename.
 
 =item B<-auto> or B<-O>
 
