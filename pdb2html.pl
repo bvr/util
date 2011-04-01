@@ -1,3 +1,4 @@
+# pdb2html.pl
 
 use Getopt::Long;
 use Pod::Usage;
@@ -5,6 +6,7 @@ use File::Temp qw(tempfile);
 use File::Copy;
 use File::Basename;
 use Encode;
+use CGI        qw(escapeHTML);
 
 GetOptions(
     'help'     => sub { help() },
@@ -17,21 +19,14 @@ GetOptions(
 help("An input have to be specified")
     unless @ARGV;
 
-my %ent = (
-    '&' => '&amp;',
-    '"' => '&quot;',
-    '<' => '&lt;',
-    '>' => '&gt;',
-);
-
 for my $file (@ARGV) {
 
     # process file
-    my @lines = map { s/^\s+//; s/\s+$//; s/([&"<>])/$ent{$1}/g; $_ } `makedoc -d "$file"`;
+    my @lines = map { s/^\s+//; s/\s+$//; escapeHTML($_) } `makedoc -d "$file"`;
     my ($fh,$filename) = tempfile(SUFFIX => '.html');
     binmode($fh => ':crlf');
 
-    print {$fh} header($title || $file);
+    print {$fh} header($title || make_title_from($file));
     for my $line (@lines) {
         Encode::from_to($line,"cp1250","utf-8");
         print {$fh} "<p>$line</p>\n";
@@ -41,7 +36,7 @@ for my $file (@ARGV) {
 
     # actions
     if($auto_output) {
-        $output = fileparse($file, qr/\.[^.]+/) . ".html";
+        $output = make_title_from($file) . ".html";
     }
     if($output) {
         warn "Creating file \"$output\"\n";
@@ -58,6 +53,15 @@ sub help {
     my $msg = shift;
     warn "Error: $msg\n\n" if $msg;
     pod2usage(1);
+}
+
+sub make_title_from {
+    my $file = fileparse($_[0], qr/\.[^.]+/);
+    for($file) {
+        tr/_/ /;
+        s/-/ - /g;
+    }
+    return $file;
 }
 
 sub header {
