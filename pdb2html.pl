@@ -29,6 +29,7 @@ for my $file (@ARGV) {
     print {$fh} header($title || make_title_from($file));
     for my $line (@lines) {
         Encode::from_to($line,"cp1250","utf-8");
+        $line = '&nbsp;' unless $line;
         print {$fh} "<p>$line</p>\n";
     }
     print {$fh} footer();
@@ -66,6 +67,10 @@ sub make_title_from {
 
 sub header {
     my ($title) = @_;
+
+    $title =~ tr/_/ /;
+    $title = escapeHTML($title);
+
     return <<HEADER;
 <html>
 <head>
@@ -107,7 +112,7 @@ generated in temp directory and default browser runned to display it.
 
 =item B<-title> or B<-t>
 
-Specify title of the document. Default is input filename.
+Specify title of the document. Default is cleaned input filename.
 
 =item B<-auto> or B<-O>
 
