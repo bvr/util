@@ -12,6 +12,7 @@ use OLE;
 use Getopt::Std;
 use Config::Auto;
 use Text::Trim;
+use Try::Tiny;
 
 eval { require Text::TabularDisplay };
 use constant HAS_TABULAR => $@ ? 0 : 1;
@@ -23,13 +24,14 @@ my %config = %{ Config::Auto::parse('do_sql.ini') };
 my %opt;
 getopts("ls:d:xe",\%opt);
 my $server     = $opt{s} || "localhost";
-my $default_db = $opt{d} || "play_here";
+my $default_db = $opt{d};
 my $expanded   = $opt{e};
 my $out_excel  = $opt{x};
 
 # getting file with queries (possibly separated by ; - semicolon)
 
-my $filename = shift;
+my $filename = shift
+    or die "Error: Missing input SQL filename\n";
 my $query = do {
     open(my $in,"<",$filename) or die "\"$filename\" could not be opened";
     local $/;
@@ -56,17 +58,16 @@ if($out_table && ! HAS_TABULAR) {
     die "Text::TabularDisplay has to be installed\n";
 }
 
-if(!defined $config{$server}) {
-    die "Undefined server \"$server\"";
-}
+my $cfg = $config{$server}
+    or die "Undefined server \"$server\"";;
 
-# connect into given database
-my $dsn = $config{$server}{oracle}      ? "Oracle:$config{$server}{serv}"
-        : $config{$server}{odbc}        ? "ODBC:$config{$server}{serv}"
-        :                                 "mysql:$default_db:$config{$server}{serv}"
-        ;
-$dm = DBI->connect("DBI:$dsn",$config{$server}{user},$config{$server}{pass})
-	or die("Connect error: $DBI::errstr");
+# build dsn and connect into given database
+my $driver = $cfg->{driver} || 'mysql';
+my $dsn = "$driver:Server=$cfg->{serv}";
+if($default_db) {
+    $dsn .= ";Database=$default_db";
+}
+my $dm = DBI->connect("DBI:$dsn",$cfg->{user},$cfg->{pass}, { RaiseError => 1, PrintError => 0 });
 
 if($out_excel) {
 
@@ -83,11 +84,16 @@ $query =~ s/-- .*?\n//sg;
 for $part_query (split /;/,$query) {        # TODO: some more elaborate command splitting
     next if $part_query =~ /^\s*$/s;        # skip empty queries
 
-    my $sth = $dm->prepare($part_query)
-        or die "Query failed: $DBI::errstr";
-
-    $sth->execute()
-        or die "Execute failed: $DBI::errstr";
+    trim($part_query);
+    my $sth;
+    try {
+        $sth = $dm->prepare($part_query);
+        $sth->execute();
+    }
+    catch {
+        warn "In query \"$part_query\":\n";
+        die $_;
+    };
 
     my $columns = $sth->{NAME};
 
