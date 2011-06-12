@@ -67,7 +67,8 @@ my $dsn = "$driver:$cfg->{serv}";
 if($default_db) {
     $dsn .= ";database=$default_db";
 }
-my $dm = DBI->connect("DBI:$dsn",$cfg->{user},$cfg->{pass}, { RaiseError => 1, PrintError => 0 });
+my $dm = DBI->connect("DBI:$dsn",$cfg->{user},$cfg->{pass},
+    { RaiseError => 1, PrintError => 0 });
 
 if($out_excel) {
 
