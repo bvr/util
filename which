@@ -1,3 +1,5 @@
+#!perl
+
 use Pod::Usage;
 
 my $program   = shift;
@@ -5,12 +7,10 @@ my @path_dirs = split /;/, $ENV{PATH};
 
 # help message
 pod2usage(-verbose => 99, -sections => "DESCRIPTION|SYNOPSIS")
-    if ! $program;
+    unless $program;
 
 # support for simple word searches
-if($program !~ /[.*]/) {
-    $program .= ".*";
-}
+$program .= ".*" unless $program != /[.*]/;
 
 my %already_checked = ();
 
@@ -25,7 +25,7 @@ for my $dir (@path_dirs) {
     # find all requested files within directory
     for my $file (grep {-e $_} glob "$dir/$program") {
         $file =~ s{[/]}{\\}g;
-        print "$file\n" if $file =~ /\.(exe|com|bat|cmd|pl|lnk|pif)$/i;
+        print "$file\n"; # if $file =~ /\.(exe|com|bat|cmd|pl|lnk|pif)$/i;
     }
 }
 
