@@ -63,9 +63,9 @@ my $cfg = $config{$server}
 
 # build dsn and connect into given database
 my $driver = $cfg->{driver} || 'mysql';
-my $dsn = "$driver:Server=$cfg->{serv}";
+my $dsn = "$driver:host=$cfg->{serv}";
 if($default_db) {
-    $dsn .= ";Database=$default_db";
+    $dsn .= ";database=$default_db";
 }
 my $dm = DBI->connect("DBI:$dsn",$cfg->{user},$cfg->{pass}, { RaiseError => 1, PrintError => 0 });
 
