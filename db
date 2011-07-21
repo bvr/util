@@ -1,0 +1,68 @@
+#!perl
+
+use 5.010; use strict; use warnings;
+use Config::Auto;
+use Getopt::Long::Descriptive;
+
+eval { require Term::ANSIColor };
+my $HAS_COLOR = $@ ? 0 : 1;
+if($HAS_COLOR && $^O eq 'MSWin32') {
+    eval { require Win32::Console::ANSI };
+    $HAS_COLOR = $@ ? 0 : 1;
+}
+if($HAS_COLOR) {
+    Term::ANSIColor->import('color');
+}
+else {
+    *color = sub { '' };        # make stub when color is not available
+}
+
+my %config = %{ Config::Auto::parse('do_sql.ini') };
+my ($opt, $usage) = describe_options(
+    'db %o',
+    ['dump|d',     "run mysqldump instead of console"],
+    ['verbose|v',  "print command-line"],
+    ['help',       "print usage message and exit"],
+    [],
+    ['database' => hidden => { one_of => [
+        map { [$_, $config{$_}{note} || ''] } sort keys %config,
+    ] } ],
+);
+
+help() if $opt->help;
+
+my $db  = $opt->database or help('Database has to be specified');
+my $cfg = $config{$db};
+
+# mysql only
+if($cfg->{driver}) {
+    help($cfg->{driver}." is not supported, mysql only");
+}
+
+# construct mysql command-line
+my $exe = $opt->dump ? 'mysqldump' : 'mysql';
+my @runargs = (
+    $exe,
+    "-h".$cfg->{serv},      # host
+    "-u".$cfg->{user},      # username
+    ($cfg->{pass} ? "-p".$cfg->{pass} : ()),    # password if defined
+    @ARGV
+);
+warn "Called: @runargs\n" if $opt->verbose;
+
+# intro message
+my $msg = sprintf "Connecting to %s server as %s account",$cfg->{serv},$cfg->{user};
+print color('bold yellow');
+print "="x length($msg),"\n";
+print $msg,"\n";
+print "$db: ",$cfg->{note}||'',"\n";
+print "="x length($msg),"\n";
+print color('reset');
+
+# run mysql
+system @runargs;
+
+sub help {
+    warn "Error: @_\n\n" if @_;
+    $usage->die;
+}
