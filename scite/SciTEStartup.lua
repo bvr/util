@@ -5,6 +5,7 @@ require("format")
 require("COMMON")
 require("highlighting_identical_text")
 require("paired_tags")
+require("SciTEOpenFilename")
 
 -- variables for user list selection
 local _UserListSelection = nil
@@ -155,6 +156,11 @@ function fold3()
   FoldSome(2)
 end
 
+-- shortcut Ctrl+Shift+O Open Selected Filename [*]
+function OpenSelFilename()
+  OpenFilename()
+end
+
 -- toggle folds, with customizable fold range
 -- khman 20060117, public domain
 function FoldSome(from)
@@ -216,6 +222,8 @@ function OnUpdateUI()
   props["yy"] = os.date("%Y")
   props["mm"] = os.date("%m")
   props["dd"] = os.date("%d")
+  temp = os.date("*t")
+  props["logdate"] = string.format("%6s", temp.day .. "." .. temp.month .. ".")
 
   props["namespace"]
     = string.gsub(
