@@ -1,0 +1,14 @@
+#!perl
+
+use File::Temp qw(tempfile);
+
+my $arg = shift || 'xml';
+$arg = ".$arg" unless $arg =~ /^\./;
+my ($fh, $filename) = tempfile('scite_XXXX', SUFFIX => $arg, DIR => $ENV{TEMP});
+
+while(<>) {
+    print {$fh} $_;
+}
+close $fh;
+
+system "D:\\Prog\\Scite\\scite.exe", $filename;
