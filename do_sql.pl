@@ -63,14 +63,12 @@ my $cfg = $config{$server}
 
 # build dsn and connect into given database
 my $driver = $cfg->{driver} || 'mysql';
-<<<<<<< HEAD
 my $dsn = "$driver:host=$cfg->{serv}";
-=======
-my $dsn = "$driver:$cfg->{serv}";
->>>>>>> 99705a1f3cd9b0e552c49915aebf241971c1ba04
+$dsn = "$driver:$cfg->{serv}" if $driver eq "ODBC";
 if($default_db) {
     $dsn .= ";database=$default_db";
 }
+# warn $dsn;
 my $dm = DBI->connect("DBI:$dsn",$cfg->{user},$cfg->{pass},
     { RaiseError => 1, PrintError => 0 });
 
