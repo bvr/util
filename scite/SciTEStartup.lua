@@ -232,6 +232,7 @@ function OnUpdateUI()
   if props.namespace ~= "" then
     props["namespace"] = props.namespace .. "::"
   end
+  props["namespace"] = string.gsub(props.namespace, "^lib::", "")
 
   props["hexcurrchar"] = HexifySimple(curchar)
 
