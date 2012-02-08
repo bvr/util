@@ -29,13 +29,13 @@ end) * l.any^1)
 
 local blockcode = token('code', (P(' ')^4 + P('\t')) * l.any^0)
 
-local hr = token('hr', #S('*-_') * P(function(input, index)
-  local line = input:gsub(' ', '')
-  if line:find('[^\r\n*-_]') then return nil end
-  if line:find('^%*%*%*') or line:find('^%-%-%-') or line:find('^___') then
-    return index
-  end
-end) * l.any^1)
+--~ local hr = token('hr', #S('*-_') * P(function(input, index)
+--~   local line = input:gsub(' ', '')
+--~   if line:find('[^\r\n*-_]') then return nil end
+--~   if line:find('^%*%*%*') or line:find('^%-%-%-') or line:find('^___') then
+--~     return index
+--~   end
+--~ end) * l.any^1)
 
 local hypertext = l.load('hypertext')
 local html_rules = hypertext._RULES
@@ -89,7 +89,7 @@ _rules = {
   { 'header', header },
   { 'blockquote', blockquote },
   { 'blockcode', blockcode },
-  { 'hr', hr },
+--~   { 'hr', hr },
   { 'link_label', link_label },
   { 'list', list },
   { 'text_line', text_line },

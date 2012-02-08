@@ -24,7 +24,8 @@ function OpenFilename()
 --~   _ALERT("Open Filename")
 
   local perlPaths = {                           -- perl lib root
-    --"/usr/lib/perl5/5.8.0",
+    "c:/perl/lib",
+    "c:/perl/site/lib",
     "d:/prog/perl/lib",
     "d:/prog/perl/site/lib",
     props.SciteDirectoryHome
