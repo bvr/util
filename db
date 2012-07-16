@@ -2,7 +2,8 @@
 
 use 5.010; use strict; use warnings;
 use Config::Auto;
-use Getopt::Long::Descriptive;
+use File::Spec;
+use Getopt::Long;
 
 eval { require Term::ANSIColor };
 my $HAS_COLOR = $@ ? 0 : 1;
@@ -17,22 +18,21 @@ else {
     *color = sub { '' };        # make stub when color is not available
 }
 
-my %config = %{ Config::Auto::parse('do_sql.ini') };
-my ($opt, $usage) = describe_options(
-    'db %o',
-    ['dump|d',     "run mysqldump instead of console"],
-    ['verbose|v',  "print command-line"],
-    ['help',       "print usage message and exit"],
-    [],
-    ['database' => hidden => { one_of => [
-        map { [$_, $config{$_}{note} || ''] } sort keys %config,
-    ] } ],
-);
+my $config_obj = Config::Auto->new(source => 'do_sql.ini');
+my $config = $config_obj->parse();
+GetOptions(\my %database,
+    'dump|d'    => \my $dump,
+    'verbose|v' => \my $verbose,
+    'help'      => sub { help() },
+    sort keys %$config
+) or help();
 
-help() if $opt->help;
+my $db  = (keys %database)[0];
+$db = shift unless defined $db;
+my $cfg = $config->{$db};
 
-my $db  = $opt->database or help('Database has to be specified');
-my $cfg = $config{$db};
+help('Valid database has to be specified')
+    unless defined $cfg;
 
 # mysql only
 if($cfg->{driver}) {
@@ -40,29 +40,57 @@ if($cfg->{driver}) {
 }
 
 # construct mysql command-line
-my $exe = $opt->dump ? 'mysqldump' : 'mysql';
+my $exe = $dump ? 'mysqldump' : 'mysql';
 my @runargs = (
     $exe,
     "-h".$cfg->{serv},      # host
     "-u".$cfg->{user},      # username
     ($cfg->{pass} ? "-p".$cfg->{pass} : ()),    # password if defined
+    ($cfg->{db}   ? "-D".$cfg->{db}   : ()),    # database if defined
     @ARGV
 );
-warn "Called: @runargs\n" if $opt->verbose;
+warn "Called: @runargs\n" if $verbose;
 
 # intro message
-my $msg = sprintf "Connecting to %s server as %s account",$cfg->{serv},$cfg->{user};
-print color('bold yellow');
-print "="x length($msg),"\n";
-print $msg,"\n";
-print "$db: ",$cfg->{note}||'',"\n";
-print "="x length($msg),"\n";
-print color('reset');
+unless($dump) {
+    my $msg = sprintf "Connecting to %s server as %s account",$cfg->{serv},$cfg->{user};
+    print color('bold yellow');
+    print "="x length($msg),"\n";
+    print $msg,"\n";
+    print "$db: ",$cfg->{note}||'',"\n";
+    print "="x length($msg),"\n";
+    print color('reset');
+}
 
 # run mysql
 system @runargs;
 
 sub help {
     warn "Error: @_\n\n" if @_;
-    $usage->die;
+
+    my $database_list = '';
+    for my $db (sort keys %$config) {
+        $database_list .=
+            sprintf "    %-15s %s\n", $db, $config->{$db}{note} || '';
+    }
+    my $config_file = File::Spec->rel2abs($config_obj->file);
+
+die <<USAGE;
+Usage: db [-d] [-v] server [additional params for mysql/mysqldump]
+
+    --help          print usage message and exit}
+    -d, --dump      run mysqldump instead of console
+    -v, --verbose   print command-line
+
+Databases available:
+
+    Edit "$config_file" file to add databases.
+
+$database_list
+The database can be specified also as an option for backwards compatibility
+
+  db localhost                        connect to localhost configuration
+  db -v localhost                     connect and print command-line
+  db -d localhost database >out.sql   dump "database" from localhost config to "out.sql" file
+USAGE
 }
