@@ -26,9 +26,10 @@ function OpenFilename()
   local perlPaths = {                           -- perl lib root
     "c:/perl/lib",
     "c:/perl/site/lib",
-    "d:/prog/perl/lib",
-    "d:/prog/perl/site/lib",
-    props.SciteDirectoryHome
+    "d:/perl/lib",
+    "d:/perl/site/lib",
+    props.SciteDirectoryHome,
+    props.SciteDirectoryHome .. "/lib"
   }
   local pythonPaths = {                         -- python lib root
     --"/usr/lib/python2.2",
@@ -162,15 +163,11 @@ function OpenFilename()
     end,
     ---------------------------------------------------------
     perl = function(name)
-      if string.find(preTxt, "use%s*")
-         or string.find(preTxt, "require%s*")
-         or string.find(preTxt, "[dn]o%s*") then
-        -- no support for old-style package delimiter (')!
-        for _, path in ipairs(perlPaths) do
-          local fnew = path.."/"..string.gsub(name, "::", "/")
-          if not string.find(fnew, "%.") then fnew = fnew..".pm" end
-          if FileExists(fnew) then return fnew end
-        end
+      -- no support for old-style package delimiter (')!
+      for _, path in ipairs(perlPaths) do
+        local fnew = path.."/"..string.gsub(name, "::", "/")
+        if not string.find(fnew, "%.") then fnew = fnew..".pm" end
+        if FileExists(fnew) then return fnew end
       end
       return name
     end,
